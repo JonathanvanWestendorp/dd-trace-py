@@ -5,7 +5,6 @@ import requests
 
 from ddtrace import config
 from ddtrace import tracer
-
 from ddtrace._trace.subscribers.http_client import _http_propagation_suppressed
 from ddtrace.contrib._events.http_client import HttpClientRequestEvent
 from ddtrace.contrib.internal.trace_utils import _sanitized_url
