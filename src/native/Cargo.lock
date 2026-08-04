@@ -356,6 +356,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "constcat"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d5cd0c57ef83705837b1cb872c973eff82b070846d3e23668322b2c0f8246d0"
+
+[[package]]
 name = "core-foundation"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -549,6 +555,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "datadog-live-debugger"
+version = "0.0.1"
+source = "git+https://github.com/DataDog/libdatadog?rev=2797595ff54e042e5afaf899864e08b9d469ec96#2797595ff54e042e5afaf899864e08b9d469ec96"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "constcat",
+ "futures",
+ "http",
+ "libdd-capabilities",
+ "libdd-capabilities-impl",
+ "libdd-common",
+ "libdd-data-pipeline",
+ "libdd-remote-config",
+ "percent-encoding",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "strum",
+ "strum_macros",
+ "sys-info",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "ddtrace-native"
 version = "0.1.0"
 dependencies = [
@@ -557,6 +589,7 @@ dependencies = [
  "bytes",
  "datadog-ffe",
  "datadog-ipc",
+ "datadog-live-debugger",
  "libc",
  "libdd-capabilities-impl",
  "libdd-common",
@@ -574,6 +607,7 @@ dependencies = [
  "libdd-trace-utils",
  "libdd-tracer-flare",
  "native-proc-macro",
+ "percent-encoding",
  "pyo3",
  "pyo3-build-config",
  "pyo3-ffi",
@@ -582,6 +616,7 @@ dependencies = [
  "serde",
  "serde_json",
  "strum",
+ "tokio",
  "tracing",
  "url",
 ]

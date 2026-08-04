@@ -25,10 +25,13 @@ url = "2"
 libc = { version = "0.2", optional = true }
 rand = "0.9"
 rustc-hash = "1.1"
+percent-encoding = "2.3"
 serde = "1.0"
+tokio = "1.0"
 datadog-ffe = { git = "https://github.com/DataDog/libdatadog", rev = "2797595ff54e042e5afaf899864e08b9d469ec96", optional = true, features = ["pyo3"] }
 serde_json = "1.0"
 datadog-ipc = { git = "https://github.com/DataDog/libdatadog", rev = "2797595ff54e042e5afaf899864e08b9d469ec96", features = ["one_way_shm_futex"] }
+datadog-live-debugger = { git = "https://github.com/DataDog/libdatadog", rev = "2797595ff54e042e5afaf899864e08b9d469ec96" }
 libdd-remote-config = { git = "https://github.com/DataDog/libdatadog", rev = "2797595ff54e042e5afaf899864e08b9d469ec96" }
 libdd-telemetry = { git = "https://github.com/DataDog/libdatadog", rev = "2797595ff54e042e5afaf899864e08b9d469ec96" }
 libdd-tracer-flare = { git = "https://github.com/DataDog/libdatadog", rev = "2797595ff54e042e5afaf899864e08b9d469ec96" }
