@@ -360,15 +360,13 @@ pub fn dispatch(
             Some(v) if v.is_empty() => return Ok(()),
             Some(v) => v,
         };
-        v.iter()
-            .map(|(_, cb)| cb.clone_ref(py).into_bound(py))
-            .collect::<Vec<_>>()
+        v.iter().map(|(_, cb)| cb.clone_ref(py)).collect::<Vec<_>>()
     };
 
     let call_args = coerce_to_tuple(py, args);
 
     for cb in &callbacks {
-        if let Err(e) = cb.call1(&call_args) {
+        if let Err(e) = cb.bind(py).call1(&call_args) {
             if should_propagate(&e, py, allow_raise) {
                 return Err(e);
             }
