@@ -240,6 +240,41 @@ urlpatterns = [ path('mini_app/',mini_app), path('view_name/', view_name) ]
     ), endpoints
 
 
+def test_endpoint_discovery_message_limit(test_agent_session, ddtrace_run_python_code_in_subprocess):
+    """DD_API_SECURITY_ENDPOINT_COLLECTION_MESSAGE_LIMIT caps a payload, it does not drop endpoints.
+
+    The limit is handed to the native worker, which splits app-endpoints across payloads. Only the
+    first may set is_first (the backend replaces its endpoint set on a first payload and merges on
+    the rest), and every endpoint has to arrive across the chunks.
+    """
+    env = os.environ.copy()
+    env["DD_API_SECURITY_ENDPOINT_COLLECTION_MESSAGE_LIMIT"] = "3"
+
+    code = """
+from ddtrace.internal.endpoints import endpoint_collection
+from ddtrace.internal.telemetry import telemetry_writer
+
+for i in range(7):
+    endpoint_collection.add_endpoint(method="GET", path="/r%d" % i)
+
+# One flush per chunk: each carries at most the configured limit, the rest stays queued.
+for _ in range(4):
+    telemetry_writer.periodic(force_flush=True)
+"""
+    _, stderr, status, _ = ddtrace_run_python_code_in_subprocess(code, env=env)
+    assert status == 0, stderr
+
+    events = test_agent_session.get_events("app-endpoints")
+    chunks = [(e["payload"]["is_first"], len(e["payload"]["endpoints"])) for e in events]
+    assert chunks, "no app-endpoints payload was sent"
+    assert all(count <= 3 for _, count in chunks), chunks
+    # Exactly one is_first across every chunk - what system-tests' test_single_is_first asserts.
+    assert sum(1 for is_first, _ in chunks if is_first) == 1, chunks
+
+    paths = {e["path"] for event in events for e in event["payload"]["endpoints"]}
+    assert paths == {"/r%d" % i for i in range(7)}, paths
+
+
 def test_instrumentation_source_config(
     test_agent_session, ddtrace_run_python_code_in_subprocess, run_python_code_in_subprocess
 ):
