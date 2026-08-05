@@ -12,6 +12,8 @@ from ddtrace._trace.span import Span
 from ddtrace.internal import core
 from ddtrace.internal.datadog.profiling import stack
 from ddtrace.internal.settings.profiling import config
+from ddtrace.internal.telemetry import telemetry_writer
+from ddtrace.internal.telemetry.constants import TELEMETRY_NAMESPACE
 from ddtrace.profiling import collector
 from ddtrace.profiling.collector import _task
 from ddtrace.profiling.collector import threading
@@ -110,6 +112,7 @@ class StackCollector(collector.Collector):
             try:
                 core.on("ddtrace.context_provider.activate", self._span_link_callback)
                 core.on("trace.span_finish", self._span_finish_callback)
+                stack.enable_span_linking()
             except Exception:
                 core.reset_listeners("ddtrace.context_provider.activate", self._span_link_callback)
                 core.reset_listeners("trace.span_finish", self._span_finish_callback)
@@ -122,6 +125,20 @@ class StackCollector(collector.Collector):
         LOG.debug("Profiling StackCollector starting")
         self._init()
         LOG.debug("Profiling StackCollector started")
+
+    @staticmethod
+    def snapshot() -> None:
+        """Report bounded span-link mapping counts with each profiler flush."""
+        try:
+            for domain in stack.SpanLinkDomain:
+                telemetry_writer.add_gauge_metric(
+                    TELEMETRY_NAMESPACE.PROFILER,
+                    "span_links",
+                    stack._stack.span_link_count(domain),
+                    (("domain", domain.name.lower()),),
+                )
+        except Exception:
+            LOG.debug("Failed to report profiler span-link metrics", exc_info=True)
 
     def _stop_service(self) -> None:
         LOG.debug("Profiling StackCollector stopping")
@@ -137,6 +154,7 @@ class StackCollector(collector.Collector):
         if self._span_finish_callback is not None:
             core.reset_listeners("trace.span_finish", self._span_finish_callback)
             self._span_finish_callback = None
+        stack.disable_span_linking()
         LOG.debug("Profiling StackCollector stopped")
 
         # Tell the native thread running the v2 sampler to stop
