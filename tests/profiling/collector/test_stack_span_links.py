@@ -158,9 +158,11 @@ def test_finishing_local_root_preserves_copied_active_logical_descendants() -> N
 def test_inherited_context_seeds_logical_span_for_current_generation(monkeypatch: pytest.MonkeyPatch) -> None:
     linked = []
     cleared = []
+    drops = []
     monkeypatch.setattr(stack_module._stack, "link_span", lambda *args: None)
     monkeypatch.setattr(stack_module._stack, "link_logical_span", lambda *args: linked.append(args))
     monkeypatch.setattr(stack_module._stack, "clear_logical_span", lambda *args: cleared.append(args))
+    monkeypatch.setattr(stack_module, "_record_span_link_drop", lambda *args: drops.append(args))
 
     stack_module.enable_span_linking()
     stack_module.link_span(Context(trace_id=1, span_id=701))
@@ -173,6 +175,7 @@ def test_inherited_context_seeds_logical_span_for_current_generation(monkeypatch
 
     assert linked == [(stack_module.SpanLinkDomain.ASYNCIO_TASK, 71, 701, 701, None)]
     assert cleared == [(stack_module.SpanLinkDomain.ASYNCIO_TASK, 72)]
+    assert drops == [("stale_generation", stack_module.SpanLinkDomain.ASYNCIO_TASK)]
 
 
 def test_clear_logical_span_is_domain_scoped() -> None:
@@ -205,7 +208,7 @@ def test_postfork_reset_invalidates_all_inherited_span_link_state(monkeypatch: p
 def test_active_span_link_uses_safe_contextvar_set(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
     monkeypatch.setattr(stack_module, "safe_contextvar_set", lambda variable, value: calls.append((variable, value)))
-    value = stack_module._SpanLinkContext(1, stack_module._SpanInfo(2, 3, "web"))
+    value = stack_module._SpanLinkContext(1, stack_module._SpanInfo(2, 3, "web"), None)
 
     stack_module._set_active_span_link(value)
 
